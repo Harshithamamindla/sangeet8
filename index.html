@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sangeet Invitation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Supabase SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body{margin:0;font-family:Arial;background:#f7f7f7}
+header{background:linear-gradient(135deg,#d4af37,#b8860b);color:#fff;text-align:center;padding:50px}
+.container{max-width:900px;margin:30px auto;padding:25px;background:#fff;border-radius:12px}
+h2,h3{color:#b8860b}
+input,select,textarea{width:100%;padding:10px;margin:10px 0;border-radius:6px;border:1px solid #ccc}
+button{background:#d4af37;color:#fff;padding:12px;border:none;border-radius:6px;cursor:pointer}
+button:hover{background:#b8860b}
+iframe{width:100%;height:300px;border-radius:10px;border:0}
+.section{margin-bottom:40px}
+.card{background:#fafafa;padding:15px;border-radius:8px;margin-bottom:10px}
+audio{width:100%;margin-top:8px}
+footer{text-align:center;padding:20px;background:#333;color:#fff}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>Sangeet Celebration</h1>
+<p>Music • Dance • Joy</p>
+</header>
+
+<div class="container">
+
+<!-- EVENT DETAILS -->
+<div class="section">
+<h2>Event Details</h2>
+<p>
+<b>Date:</b> 08-02-2026<br>
+<b>Time:</b> 7:00 PM<br>
+<b>Venue:</b> Brindavan Farm House, Kamareddy
+</p>
+<iframe src="https://www.google.com/maps?q=18.3273517,78.4174102&output=embed"></iframe>
+</div>
+
+<!-- PERFORMANCE -->
+<div class="section">
+<h3>Performance Sign-Up</h3>
+<form id="performanceForm">
+<input id="performerName" placeholder="Your Name" required>
+<input id="act" placeholder="Dance / Song / Skit" required>
+<button>Add Performance</button>
+</form>
+
+<h3>Performance Wall</h3>
+<div id="performanceWall">Loading...</div>
+</div>
+
+<!-- AUDIO -->
+<div class="section">
+<h3>Upload Audio</h3>
+<form id="audioForm">
+<input id="audioName" placeholder="Audio Title" required>
+<input type="file" id="audioFile" accept="audio/*" required>
+<button>Upload Audio</button>
+</form>
+
+<h3>Audio Gallery</h3>
+<div id="audioWall">Loading...</div>
+</div>
+
+<!-- RSVP -->
+<div class="section">
+<h3>RSVP</h3>
+<form id="rsvpForm">
+<input id="guestName" placeholder="Your Name" required>
+<select id="attendance" required>
+<option value="">Will you attend?</option>
+<option>Yes</option>
+<option>No</option>
+</select>
+<textarea id="notes" placeholder="Notes (optional)"></textarea>
+<button>Submit RSVP</button>
+</form>
+</div>
+
+</div>
+
+<footer>
+<p>With love 💛 Akanksha & Srikanth</p>
+</footer>
+
+<script>
+// 🔴 REPLACE WITH YOUR SUPABASE DETAILS
+const client = supabase.createClient(
+  "https://skaumzewilaxfbohsqak.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNrYXVtemV3aWxheGZib2hzcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxNzI0MDcsImV4cCI6MjA4NTc0ODQwN30.RilM3bKwT5N3pZBsSnXsVV9oIiVOJr0aDnpVNxTB11E"
+);
+
+/* -------- PERFORMANCE -------- */
+async function loadPerformances(){
+  const { data } = await client.from("performances").select("*").order("id",{ascending:false});
+  performanceWall.innerHTML="";
+  if(data){
+    data.forEach(p=>{
+      performanceWall.innerHTML+=`
+      <div class="card"><b>${p.name}</b> – ${p.act}</div>`;
+    });
+  }
+}
+loadPerformances();
+
+performanceForm.addEventListener("submit",async e=>{
+  e.preventDefault();
+  await client.from("performances").insert({
+    name: performerName.value,
+    act: act.value
+  });
+  e.target.reset();
+  loadPerformances();
+});
+
+/* -------- AUDIO -------- */
+async function loadAudios(){
+  const { data } = await client.from("audio_files").select("*").order("id",{ascending:false});
+  audioWall.innerHTML="";
+  if(data){
+    data.forEach(a=>{
+      audioWall.innerHTML+=`
+      <div class="card">
+        <b>${a.name}</b>
+        <audio controls src="${a.file_url}"></audio>
+      </div>`;
+    });
+  }
+}
+loadAudios();
+
+audioForm.addEventListener("submit",async e=>{
+  e.preventDefault();
+  const file = audioFile.files[0];
+  const path = Date.now()+"_"+file.name;
+
+  const { error } = await client.storage.from("audios").upload(path,file);
+  if(error){ alert("Upload failed"); return; }
+
+  const { data:url } = client.storage.from("audios").getPublicUrl(path);
+
+  await client.from("audio_files").insert({
+    name: audioName.value,
+    file_url: url.publicUrl
+  });
+
+  alert("Audio uploaded!");
+  e.target.reset();
+  loadAudios();
+});
+
+/* -------- RSVP -------- */
+rsvpForm.addEventListener("submit",async e=>{
+  e.preventDefault();
+  await client.from("rsvps").insert({
+    name: guestName.value,
+    attendance: attendance.value,
+    notes: notes.value
+  });
+  alert("RSVP submitted!");
+  e.target.reset();
+});
+</script>
+
+</body>
+</html>
