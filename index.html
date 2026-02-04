@@ -18,8 +18,6 @@ button{background:#d4af37;color:#fff;padding:12px;border:none;border-radius:6px;
 button:hover{background:#b8860b}
 iframe{width:100%;height:300px;border-radius:10px;border:0}
 .section{margin-bottom:40px}
-.card{background:#fafafa;padding:15px;border-radius:8px;margin-bottom:10px}
-audio{width:100%;margin-top:8px}
 footer{text-align:center;padding:20px;background:#333;color:#fff}
 </style>
 </head>
@@ -33,7 +31,7 @@ footer{text-align:center;padding:20px;background:#333;color:#fff}
 
 <div class="container">
 
-<!-- EVENT DETAILS (Visible to everyone) -->
+<!-- EVENT DETAILS -->
 <div class="section">
 <h2>Event Details</h2>
 <p>
@@ -44,20 +42,39 @@ footer{text-align:center;padding:20px;background:#333;color:#fff}
 <iframe src="https://www.google.com/maps?q=18.3273517,78.4174102&output=embed"></iframe>
 </div>
 
-<!-- ADMIN-ONLY SECTIONS (HIDDEN FROM PUBLIC) -->
-<div class="section" id="performanceSection" style="display:none">
-<h3>Performances</h3>
-<div id="performanceWall">Loading...</div>
+<!-- PERFORMANCE SIGN-UP FORM -->
+<div class="section">
+<h3>Performance Sign-Up</h3>
+<form id="performanceForm">
+<input id="performerName" placeholder="Your Name" required>
+<input id="act" placeholder="Dance / Song / Skit" required>
+<button>Submit</button>
+</form>
 </div>
 
-<div class="section" id="audioSection" style="display:none">
-<h3>Audio Gallery</h3>
-<div id="audioWall">Loading...</div>
+<!-- AUDIO UPLOAD FORM -->
+<div class="section">
+<h3>Upload Audio</h3>
+<form id="audioForm">
+<input id="audioName" placeholder="Audio Title" required>
+<input type="file" id="audioFile" accept="audio/*" required>
+<button>Upload</button>
+</form>
 </div>
 
-<div class="section" id="rsvpSection" style="display:none">
-<h3>RSVP List</h3>
-<div id="rsvpWall">Loading...</div>
+<!-- RSVP FORM -->
+<div class="section">
+<h3>RSVP</h3>
+<form id="rsvpForm">
+<input id="guestName" placeholder="Your Name" required>
+<select id="attendance" required>
+<option value="">Will you attend?</option>
+<option>Yes</option>
+<option>No</option>
+</select>
+<textarea id="notes" placeholder="Notes (optional)"></textarea>
+<button>Submit</button>
+</form>
 </div>
 
 </div>
@@ -73,33 +90,50 @@ const client = supabase.createClient(
   "YOUR_PUBLIC_ANON_KEY_HERE"
 );
 
-// ---------- FUNCTIONS FOR ADMIN ONLY ----------
-async function loadPerformances(){
-  const { data } = await client.from("performances").select("*").order("id",{ascending:false});
-  }
-}
+/* -------- PERFORMANCE FORM SUBMISSION -------- */
+const performanceForm = document.getElementById("performanceForm");
+performanceForm.addEventListener("submit", async e => {
+  e.preventDefault();
+  await client.from("performances").insert({
+    name: document.getElementById("performerName").value,
+    act: document.getElementById("act").value
+  });
+  alert("Performance submitted!");
+  e.target.reset();
+});
 
-async function loadAudios(){
-  const { data } = await client.from("audio_files").select("*").order("id",{ascending:false});
-}
+/* -------- AUDIO FORM SUBMISSION -------- */
+const audioForm = document.getElementById("audioForm");
+audioForm.addEventListener("submit", async e => {
+  e.preventDefault();
+  const file = document.getElementById("audioFile").files[0];
+  const path = Date.now() + "_" + file.name;
 
-async function loadRsvps(){
-  const { data } = await client.from("rsvps").select("*").order("id",{ascending:false});
-   
-}
+  const { error } = await client.storage.from("audios").upload(path, file);
+  if(error){ alert("Upload failed"); return; }
 
-// Uncomment below lines **only for admin use** to see all data
-  /**
- document.getElementById("performanceSection").style.display="block";
- document.getElementById("audioSection").style.display="block";
- document.getElementById("rsvpSection").style.display="block";
- loadPerformances();
- loadAudios();
- loadRsvps();**/
+  await client.from("audio_files").insert({
+    name: document.getElementById("audioName").value,
+    file_path: path
+  });
+
+  alert("Audio uploaded!");
+  e.target.reset();
+});
+
+/* -------- RSVP FORM SUBMISSION -------- */
+const rsvpForm = document.getElementById("rsvpForm");
+rsvpForm.addEventListener("submit", async e => {
+  e.preventDefault();
+  await client.from("rsvps").insert({
+    name: document.getElementById("guestName").value,
+    attending: document.getElementById("attendance").value,
+    notes: document.getElementById("notes").value
+  });
+  alert("RSVP submitted!");
+  e.target.reset();
+});
 </script>
 
 </body>
 </html>
-
-
-
