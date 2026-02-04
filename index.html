@@ -36,7 +36,7 @@ footer{text-align:center;padding:20px;background:#333;color:#fff}
 <h2>Event Details</h2>
 <p>
 <b>Date:</b> 08-02-2026<br>
-<b>Time:</b> 6:30 PM<br>
+<b>Time:</b> 7:00 PM<br>
 <b>Venue:</b> Brindavan Farm House, Kamareddy
 </p>
 <iframe src="https://www.google.com/maps?q=18.3273517,78.4174102&output=embed"></iframe>
@@ -48,7 +48,7 @@ footer{text-align:center;padding:20px;background:#333;color:#fff}
 <form id="performanceForm">
 <input id="performerName" placeholder="Your Name" required>
 <input id="act" placeholder="Dance / Song / Skit" required>
-<button type="submit">Submit Performance</button>
+<button>Submit</button>
 </form>
 </div>
 
@@ -58,9 +58,11 @@ footer{text-align:center;padding:20px;background:#333;color:#fff}
 <form id="audioForm">
 <input id="audioName" placeholder="Audio Title" required>
 <input type="file" id="audioFile" accept="audio/*" required>
-<button type="submit">Upload Audio</button>
+<button>Upload</button>
 </form>
 </div>
+
+<!-- RSVP FORM -->
 
 <footer>
 <p>With love 💛 Akanksha & Srikanth</p>
@@ -101,6 +103,19 @@ audioForm.addEventListener("submit", async e => {
   });
 
   alert("Audio uploaded!");
+  e.target.reset();
+});
+
+/* -------- RSVP FORM SUBMISSION -------- */
+const rsvpForm = document.getElementById("rsvpForm");
+rsvpForm.addEventListener("submit", async e => {
+  e.preventDefault();
+  await client.from("rsvps").insert({
+    name: document.getElementById("guestName").value,
+    attending: document.getElementById("attendance").value,
+    notes: document.getElementById("notes").value
+  });
+  alert("RSVP submitted!");
   e.target.reset();
 });
 </script>
