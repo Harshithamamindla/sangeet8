@@ -33,7 +33,7 @@ footer{text-align:center;padding:20px;background:#333;color:#fff}
 
 <div class="container">
 
-<!-- EVENT DETAILS -->
+<!-- EVENT DETAILS (Visible to everyone) -->
 <div class="section">
 <h2>Event Details</h2>
 <p>
@@ -44,42 +44,20 @@ footer{text-align:center;padding:20px;background:#333;color:#fff}
 <iframe src="https://www.google.com/maps?q=18.3273517,78.4174102&output=embed"></iframe>
 </div>
 
-<!-- PERFORMANCE -->
-<div class="section">
-<h3>Performance Sign-Up</h3>
-<form id="performanceForm">
-<input id="performerName" placeholder="Your Name" required>
-<input id="act" placeholder="Dance / Song / Skit" required>
-<button>Add Performance</button>
-</form>
+<!-- ADMIN-ONLY SECTIONS (HIDDEN FROM PUBLIC) -->
+<div class="section" id="performanceSection" style="display:none">
+<h3>Performances</h3>
+<div id="performanceWall">Loading...</div>
+</div>
 
-
-<!-- AUDIO -->
-<div class="section">
-<h3>Upload Audio</h3>
-<form id="audioForm">
-<input id="audioName" placeholder="Audio Title" required>
-<input type="file" id="audioFile" accept="audio/*" required>
-<button>Upload Audio</button>
-</form>
-
+<div class="section" id="audioSection" style="display:none">
 <h3>Audio Gallery</h3>
 <div id="audioWall">Loading...</div>
 </div>
 
-<!-- RSVP -->
-<div class="section">
-<h3>RSVP</h3>
-<form id="rsvpForm">
-<input id="guestName" placeholder="Your Name" required>
-<select id="attendance" required>
-<option value="">Will you attend?</option>
-<option>Yes</option>
-<option>No</option>
-</select>
-<textarea id="notes" placeholder="Notes (optional)"></textarea>
-<button>Submit RSVP</button>
-</form>
+<div class="section" id="rsvpSection" style="display:none">
+<h3>RSVP List</h3>
+<div id="rsvpWall">Loading...</div>
 </div>
 
 </div>
@@ -92,81 +70,56 @@ footer{text-align:center;padding:20px;background:#333;color:#fff}
 // 🔴 REPLACE WITH YOUR SUPABASE DETAILS
 const client = supabase.createClient(
   "https://skaumzewilaxfbohsqak.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNrYXVtemV3aWxheGZib2hzcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxNzI0MDcsImV4cCI6MjA4NTc0ODQwN30.RilM3bKwT5N3pZBsSnXsVV9oIiVOJr0aDnpVNxTB11E"
+  "YOUR_PUBLIC_ANON_KEY_HERE"
 );
 
-/* -------- PERFORMANCE -------- */
+// ---------- FUNCTIONS FOR ADMIN ONLY ----------
 async function loadPerformances(){
   const { data } = await client.from("performances").select("*").order("id",{ascending:false});
-  performanceWall.innerHTML="";
+  const performanceWall = document.getElementById("performanceWall");
+  performanceWall.innerHTML = "";
   if(data){
     data.forEach(p=>{
-      performanceWall.innerHTML+=`
-      <div class="card"><b>${p.name}</b> – ${p.act}</div>`;
+      performanceWall.innerHTML += `<div class="card"><b>${p.name}</b> – ${p.act}</div>`;
     });
   }
 }
-loadPerformances();
 
-performanceForm.addEventListener("submit",async e=>{
-  e.preventDefault();
-  await client.from("performances").insert({
-    name: performerName.value,
-    act: act.value
-  });
-  e.target.reset();
-  loadPerformances();
-});
-
-/* -------- AUDIO -------- */
 async function loadAudios(){
   const { data } = await client.from("audio_files").select("*").order("id",{ascending:false});
-  audioWall.innerHTML="";
+  const audioWall = document.getElementById("audioWall");
+  audioWall.innerHTML = "";
   if(data){
-    data.forEach(a=>{
-      audioWall.innerHTML+=`
+    for(const a of data){
+      const { data: signedUrl } = await client.storage.from("audios").createSignedUrl(a.file_path, 60);
+      audioWall.innerHTML += `
       <div class="card">
         <b>${a.name}</b>
-        <audio controls src="${a.file_url}"></audio>
+        <audio controls src="${signedUrl.signedUrl}"></audio>
       </div>`;
+    }
+  }
+}
+
+async function loadRsvps(){
+  const { data } = await client.from("rsvps").select("*").order("id",{ascending:false});
+  const rsvpWall = document.getElementById("rsvpWall");
+  rsvpWall.innerHTML = "";
+  if(data){
+    data.forEach(r=>{
+      rsvpWall.innerHTML += `<div class="card"><b>${r.name}</b> – ${r.attending} – ${r.notes || ""}</div>`;
     });
   }
 }
-loadAudios();
 
-audioForm.addEventListener("submit",async e=>{
-  e.preventDefault();
-  const file = audioFile.files[0];
-  const path = Date.now()+"_"+file.name;
-
-  const { error } = await client.storage.from("audios").upload(path,file);
-  if(error){ alert("Upload failed"); return; }
-
-  const { data:url } = client.storage.from("audios").getPublicUrl(path);
-
-  await client.from("audio_files").insert({
-    name: audioName.value,
-    file_url: url.publicUrl
-  });
-
-  alert("Audio uploaded!");
-  e.target.reset();
-  loadAudios();
-});
-
-/* -------- RSVP -------- */
-rsvpForm.addEventListener("submit",async e=>{
-  e.preventDefault();
-  await client.from("rsvps").insert({
-    name: guestName.value,
-    attendance: attendance.value,
-    notes: notes.value
-  });
-  alert("RSVP submitted!");
-  e.target.reset();
-});
+// Uncomment below lines **only for admin use** to see all data
+// document.getElementById("performanceSection").style.display="block";
+// document.getElementById("audioSection").style.display="block";
+// document.getElementById("rsvpSection").style.display="block";
+// loadPerformances();
+// loadAudios();
+// loadRsvps();
 </script>
 
 </body>
 </html>
-
