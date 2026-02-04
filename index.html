@@ -76,40 +76,16 @@ const client = supabase.createClient(
 // ---------- FUNCTIONS FOR ADMIN ONLY ----------
 async function loadPerformances(){
   const { data } = await client.from("performances").select("*").order("id",{ascending:false});
-  const performanceWall = document.getElementById("performanceWall");
-  performanceWall.innerHTML = "";
-  if(data){
-    data.forEach(p=>{
-      performanceWall.innerHTML += `<div class="card"><b>${p.name}</b> – ${p.act}</div>`;
-    });
   }
 }
 
 async function loadAudios(){
   const { data } = await client.from("audio_files").select("*").order("id",{ascending:false});
-  const audioWall = document.getElementById("audioWall");
-  audioWall.innerHTML = "";
-  if(data){
-    for(const a of data){
-      const { data: signedUrl } = await client.storage.from("audios").createSignedUrl(a.file_path, 60);
-      audioWall.innerHTML += `
-      <div class="card">
-        <b>${a.name}</b>
-        <audio controls src="${signedUrl.signedUrl}"></audio>
-      </div>`;
-    }
-  }
 }
 
 async function loadRsvps(){
   const { data } = await client.from("rsvps").select("*").order("id",{ascending:false});
-  const rsvpWall = document.getElementById("rsvpWall");
-  rsvpWall.innerHTML = "";
-  if(data){
-    data.forEach(r=>{
-      rsvpWall.innerHTML += `<div class="card"><b>${r.name}</b> – ${r.attending} – ${r.notes || ""}</div>`;
-    });
-  }
+   
 }
 
 // Uncomment below lines **only for admin use** to see all data
@@ -123,4 +99,5 @@ async function loadRsvps(){
 
 </body>
 </html>
+
 
