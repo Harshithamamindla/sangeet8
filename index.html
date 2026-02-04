@@ -62,23 +62,6 @@ footer{text-align:center;padding:20px;background:#333;color:#fff}
 </form>
 </div>
 
-<!-- RSVP FORM -->
-<div class="section">
-<h3>RSVP</h3>
-<form id="rsvpForm">
-<input id="guestName" placeholder="Your Name" required>
-<select id="attendance" required>
-<option value="">Will you attend?</option>
-<option>Yes</option>
-<option>No</option>
-</select>
-<textarea id="notes" placeholder="Notes (optional)"></textarea>
-<button>Submit</button>
-</form>
-</div>
-
-</div>
-
 <footer>
 <p>With love 💛 Akanksha & Srikanth</p>
 </footer>
@@ -120,22 +103,10 @@ audioForm.addEventListener("submit", async e => {
   alert("Audio uploaded!");
   e.target.reset();
 });
-
-/* -------- RSVP FORM SUBMISSION -------- */
-const rsvpForm = document.getElementById("rsvpForm");
-rsvpForm.addEventListener("submit", async e => {
-  e.preventDefault();
-  await client.from("rsvps").insert({
-    name: document.getElementById("guestName").value,
-    attending: document.getElementById("attendance").value,
-    notes: document.getElementById("notes").value
-  });
-  alert("RSVP submitted!");
-  e.target.reset();
-});
 </script>
 
 </body>
 </html>
+
 
 
